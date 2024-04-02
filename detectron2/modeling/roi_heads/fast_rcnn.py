@@ -8,6 +8,7 @@ from torch.nn import functional as F
 from detectron2.config import configurable
 from detectron2.data.detection_utils import get_fed_loss_cls_weights
 from detectron2.layers import ShapeSpec, batched_nms, cat, cross_entropy, nonzero_tuple
+from detectron2.layers.soft_nms import batched_soft_nms
 from detectron2.modeling.box_regression import Box2BoxTransform, _dense_box_regression_loss
 from detectron2.structures import Boxes, Instances
 from detectron2.utils.events import get_event_storage
@@ -49,6 +50,10 @@ def fast_rcnn_inference(
     image_shapes: List[Tuple[int, int]],
     score_thresh: float,
     nms_thresh: float,
+    soft_nms_enabled,
+    soft_nms_method,
+    soft_nms_sigma,
+    soft_nms_prune,
     topk_per_image: int,
 ):
     """
@@ -67,6 +72,10 @@ def fast_rcnn_inference(
         score_thresh (float): Only return detections with a confidence score exceeding this
             threshold.
         nms_thresh (float):  The threshold to use for box non-maximum suppression. Value in [0, 1].
+        soft_nms_enabled (bool): Indicate to use soft non-maximum suppression.
+        soft_nms_method: (str): One of ['gaussian', 'linear', 'hard']
+        soft_nms_sigma: (float): Sigma for gaussian soft nms. Value in (0, inf)
+        soft_nms_prune: (float): Threshold for pruning during soft nms. Value in [0, 1]
         topk_per_image (int): The number of top scoring detections to return. Set < 0 to return
             all detections.
 
@@ -78,7 +87,16 @@ def fast_rcnn_inference(
     """
     result_per_image = [
         fast_rcnn_inference_single_image(
-            boxes_per_image, scores_per_image, image_shape, score_thresh, nms_thresh, topk_per_image
+            boxes_per_image,
+            scores_per_image,
+            image_shape,
+            score_thresh,
+            nms_thresh,
+            soft_nms_enabled,
+            soft_nms_method,
+            soft_nms_sigma,
+            soft_nms_prune,
+            topk_per_image
         )
         for scores_per_image, boxes_per_image, image_shape in zip(scores, boxes, image_shapes)
     ]
@@ -121,6 +139,10 @@ def fast_rcnn_inference_single_image(
     image_shape: Tuple[int, int],
     score_thresh: float,
     nms_thresh: float,
+    soft_nms_enabled,
+    soft_nms_method,
+    soft_nms_sigma,
+    soft_nms_prune,
     topk_per_image: int,
 ):
     """
@@ -159,7 +181,19 @@ def fast_rcnn_inference_single_image(
     scores = scores[filter_mask]
 
     # 2. Apply NMS for each class independently.
-    keep = batched_nms(boxes, scores, filter_inds[:, 1], nms_thresh)
+    if not soft_nms_enabled:
+        keep = batched_nms(boxes, scores, filter_inds[:, 1], nms_thresh)
+    else:
+        keep, soft_nms_scores = batched_soft_nms(
+            boxes,
+            scores,
+            filter_inds[:, 1],
+            soft_nms_method,
+            soft_nms_sigma,
+            nms_thresh,
+            soft_nms_prune,
+        )
+        scores[keep] = soft_nms_scores
     if topk_per_image >= 0:
         keep = keep[:topk_per_image]
     boxes, scores, filter_inds = boxes[keep], scores[keep], filter_inds[keep]
@@ -188,6 +222,10 @@ class FastRCNNOutputLayers(nn.Module):
         num_classes: int,
         test_score_thresh: float = 0.0,
         test_nms_thresh: float = 0.5,
+        soft_nms_enabled=False,
+        soft_nms_method="gaussian",
+        soft_nms_sigma=0.5,
+        soft_nms_prune=0.001,
         test_topk_per_image: int = 100,
         cls_agnostic_bbox_reg: bool = False,
         smooth_l1_beta: float = 0.0,
@@ -247,6 +285,10 @@ class FastRCNNOutputLayers(nn.Module):
         self.smooth_l1_beta = smooth_l1_beta
         self.test_score_thresh = test_score_thresh
         self.test_nms_thresh = test_nms_thresh
+        self.soft_nms_enabled = soft_nms_enabled
+        self.soft_nms_method = soft_nms_method
+        self.soft_nms_sigma = soft_nms_sigma
+        self.soft_nms_prune = soft_nms_prune
         self.test_topk_per_image = test_topk_per_image
         self.box_reg_loss_type = box_reg_loss_type
         if isinstance(loss_weight, float):
@@ -275,6 +317,10 @@ class FastRCNNOutputLayers(nn.Module):
             "smooth_l1_beta"            : cfg.MODEL.ROI_BOX_HEAD.SMOOTH_L1_BETA,
             "test_score_thresh"         : cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST,
             "test_nms_thresh"           : cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST,
+            "soft_nms_enabled"          : cfg.MODEL.ROI_HEADS.SOFT_NMS_ENABLED,
+            "soft_nms_method"           : cfg.MODEL.ROI_HEADS.SOFT_NMS_METHOD,
+            "soft_nms_sigma"            : cfg.MODEL.ROI_HEADS.SOFT_NMS_SIGMA,
+            "soft_nms_prune"            : cfg.MODEL.ROI_HEADS.SOFT_NMS_PRUNE,
             "test_topk_per_image"       : cfg.TEST.DETECTIONS_PER_IMAGE,
             "box_reg_loss_type"         : cfg.MODEL.ROI_BOX_HEAD.BBOX_REG_LOSS_TYPE,
             "loss_weight"               : {"loss_box_reg": cfg.MODEL.ROI_BOX_HEAD.BBOX_REG_LOSS_WEIGHT},  # noqa
@@ -462,12 +508,24 @@ class FastRCNNOutputLayers(nn.Module):
         # in minibatch (2) are given equal influence.
         return loss_box_reg / max(gt_classes.numel(), 1.0)  # return 0 if empty
 
-    def inference(self, predictions: Tuple[torch.Tensor, torch.Tensor], proposals: List[Instances]):
+    def inference(
+        self,
+        predictions: Tuple[torch.Tensor, torch.Tensor],
+        proposals: List[Instances],
+        soft_nms_enabled,
+        soft_nms_method,
+        soft_nms_sigma,
+        soft_nms_prune,
+    ):
         """
         Args:
             predictions: return values of :meth:`forward()`.
             proposals (list[Instances]): proposals that match the features that were
                 used to compute predictions. The ``proposal_boxes`` field is expected.
+            soft_nms_enabled (bool): same as fast_rcnn_inference.
+            soft_nms_method: (str): same as fast_rcnn_inference.
+            soft_nms_sigma: (float): same as fast_rcnn_inference.
+            soft_nms_prune: (float): same as fast-rcnn_inference
 
         Returns:
             list[Instances]: same as `fast_rcnn_inference`.
@@ -482,6 +540,10 @@ class FastRCNNOutputLayers(nn.Module):
             image_shapes,
             self.test_score_thresh,
             self.test_nms_thresh,
+            soft_nms_enabled,
+            soft_nms_method,
+            soft_nms_sigma,
+            soft_nms_prune,
             self.test_topk_per_image,
         )
 

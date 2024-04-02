@@ -9,6 +9,7 @@ from torch.nn import functional as F
 
 from detectron2.config import configurable
 from detectron2.layers import CycleBatchNormList, ShapeSpec, batched_nms, cat, get_norm
+from detectron2.layers.soft_nms import batched_soft_nms
 from detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
 from detectron2.utils.events import get_event_storage
 
@@ -50,6 +51,10 @@ class RetinaNet(DenseDetector):
         test_topk_candidates=1000,
         test_nms_thresh=0.5,
         max_detections_per_image=100,
+        soft_nms_enabled=False,
+        soft_nms_method="linear",
+        soft_nms_sigma=0.5,
+        soft_nms_prune=0.001,
         pixel_mean,
         pixel_std,
         vis_period=0,
@@ -108,6 +113,11 @@ class RetinaNet(DenseDetector):
         self.test_topk_candidates = test_topk_candidates
         self.test_nms_thresh = test_nms_thresh
         self.max_detections_per_image = max_detections_per_image
+        # Soft nms
+        self.soft_nms_enabled = soft_nms_enabled
+        self.soft_nms_method = soft_nms_method
+        self.soft_nms_sigma = soft_nms_sigma
+        self.soft_nms_prune = soft_nms_prune
         # Vis parameters
         self.vis_period = vis_period
         self.input_format = input_format
@@ -302,9 +312,23 @@ class RetinaNet(DenseDetector):
             self.test_topk_candidates,
             image_size,
         )
-        keep = batched_nms(  # per-class NMS
-            pred.pred_boxes.tensor, pred.scores, pred.pred_classes, self.test_nms_thresh
-        )
+        if not self.soft_nms_enabled:
+            keep = batched_nms(  # per-class NMS
+                pred.pred_boxes.tensor, pred.scores, pred.pred_classes, self.test_nms_thresh
+            )
+            # keep = batched_nms(boxes_all, scores_all, class_idxs_all, self.nms_threshold)
+        else:
+            keep, soft_nms_scores = batched_soft_nms(
+                pred.pred_boxes.tensor,
+                pred.scores,
+                pred.pred_classes,
+                self.soft_nms_method,
+                self.soft_nms_sigma,
+                self.nms_threshold,
+                self.soft_nms_prune,
+            )
+            # NMS stuff, not sure what this does
+            # scores_all[keep] = soft_nms_scores
         return pred[keep[: self.max_detections_per_image]]
 
 
