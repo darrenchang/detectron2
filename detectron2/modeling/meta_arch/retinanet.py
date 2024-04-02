@@ -51,7 +51,7 @@ class RetinaNet(DenseDetector):
         test_topk_candidates=1000,
         test_nms_thresh=0.5,
         max_detections_per_image=100,
-        soft_nms_enabled=False,
+        soft_nms_enabled=True,
         soft_nms_method="linear",
         soft_nms_sigma=0.5,
         soft_nms_prune=0.001,

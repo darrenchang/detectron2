@@ -222,7 +222,7 @@ class FastRCNNOutputLayers(nn.Module):
         num_classes: int,
         test_score_thresh: float = 0.0,
         test_nms_thresh: float = 0.5,
-        soft_nms_enabled=False,
+        soft_nms_enabled=True,
         soft_nms_method="gaussian",
         soft_nms_sigma=0.5,
         soft_nms_prune=0.001,
