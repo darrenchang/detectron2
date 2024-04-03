@@ -512,10 +512,10 @@ class FastRCNNOutputLayers(nn.Module):
         self,
         predictions: Tuple[torch.Tensor, torch.Tensor],
         proposals: List[Instances],
-        soft_nms_enabled,
-        soft_nms_method,
-        soft_nms_sigma,
-        soft_nms_prune,
+        soft_nms_enabled=True,
+        soft_nms_method="linear",
+        soft_nms_sigma=0.5,
+        soft_nms_prune=0.001,
     ):
         """
         Args:
