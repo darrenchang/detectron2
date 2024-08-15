@@ -138,7 +138,7 @@ def paste_masks_in_image(
             masks_chunk = (masks_chunk >= threshold).to(dtype=torch.bool)
         else:
             # for visualization and debugging
-            masks_chunk = (masks_chunk * 255).to(dtype=torch.uint8)
+            masks_chunk = (masks_chunk * 255).byte()
 
         if torch.jit.is_scripting():  # Scripting does not use the optimized codepath
             img_masks[inds] = masks_chunk
@@ -193,7 +193,7 @@ def paste_mask_in_image_old(mask, box, img_h, img_w, threshold):
     else:
         # for visualization and debugging, we also
         # allow it to return an unmodified mask
-        mask = torch.from_numpy(mask * 255).uint8()
+        mask = torch.from_numpy(mask * 255).byte()
 
     im_mask = torch.zeros((img_h, img_w), dtype=torch.uint8)
     x_0 = max(box[0], 0)
