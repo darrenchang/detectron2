@@ -58,7 +58,7 @@ def assemble_rcnn_outputs_by_name(image_sizes, tensor_outputs, force_mask_on=Fal
     else:
         result.pred_boxes = Boxes(bbox_nms)
     result.scores = score_nms
-    result.pred_classes = class_nms.int64()
+    result.pred_classes = class_nms.long()
 
     mask_fcn_probs = tensor_outputs.get("mask_fcn_probs", None)
     if mask_fcn_probs is not None:
