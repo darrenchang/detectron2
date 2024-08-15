@@ -138,8 +138,8 @@ def get_uncertain_point_coords_on_grid(uncertainty_map, num_points):
     num_points = min(H * W, num_points)
     point_indices = torch.topk(uncertainty_map.view(R, H * W), k=num_points, dim=1)[1]
     point_coords = torch.zeros(R, num_points, 2, dtype=torch.float, device=uncertainty_map.device)
-    point_coords[:, :, 0] = w_step / 2.0 + (point_indices % W).to(torch.float) * w_step
-    point_coords[:, :, 1] = h_step / 2.0 + (point_indices // W).to(torch.float) * h_step
+    point_coords[:, :, 0] = w_step / 2.0 + (point_indices % W).float() * w_step
+    point_coords[:, :, 1] = h_step / 2.0 + (point_indices // W).float() * h_step
     return point_indices, point_coords
 
 
@@ -249,7 +249,7 @@ def sample_point_labels(instances, point_coords):
             points_coord_grid_sample_format = point_coords_splits[i] / scale
             gt_mask_logits.append(
                 point_sample(
-                    gt_bit_masks.to(torch.float32).unsqueeze(1),
+                    gt_bit_masks.float().unsqueeze(1),
                     points_coord_grid_sample_format,
                     align_corners=False,
                 ).squeeze(1)

@@ -64,7 +64,7 @@ class DensePoseGeneralizedRCNNWithTTA(GeneralizedRCNNWithTTA):
         """
         orig_shape = (input["height"], input["width"])
         # For some reason, resize with uint8 slightly increases box AP but decreases densepose AP
-        input["image"] = input["image"].to(torch.uint8)
+        input["image"] = input["image"].uint8()
         augmented_inputs, tfms = self._get_augmented_inputs(input)
         # Detect boxes from all augmented versions
         with self._turn_off_roi_heads(["mask_on", "keypoint_on", "densepose_on"]):

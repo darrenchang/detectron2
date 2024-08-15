@@ -27,8 +27,8 @@ def get_point_coords_from_point_annotation(instances):
     for instances_per_image in instances:
         if len(instances_per_image) == 0:
             continue
-        point_coords = instances_per_image.gt_point_coords.to(torch.float32)
-        point_labels = instances_per_image.gt_point_labels.to(torch.float32).clone()
+        point_coords = instances_per_image.gt_point_coords.float()
+        point_labels = instances_per_image.gt_point_labels.float.clone()
         proposal_boxes_per_image = instances_per_image.proposal_boxes.tensor
 
         # Convert point coordinate system, ground truth points are in image coord.

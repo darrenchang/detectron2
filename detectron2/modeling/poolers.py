@@ -56,7 +56,7 @@ def assign_boxes_to_levels(
     # clamp level to (min, max), in case the box size is too large or too small
     # for the available feature maps
     level_assignments = torch.clamp(level_assignments, min=min_level, max=max_level)
-    return level_assignments.to(torch.int64) - min_level
+    return level_assignments.int64() - min_level
 
 
 # script the module to avoid hardcoded device type

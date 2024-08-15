@@ -147,7 +147,7 @@ class Boxes:
         if not isinstance(tensor, torch.Tensor):
             tensor = torch.as_tensor(tensor, dtype=torch.float32, device=torch.device("cpu"))
         else:
-            tensor = tensor.to(torch.float32)
+            tensor = tensor.float()
         if tensor.numel() == 0:
             # Use reshape, so we don't end up creating a new tensor that does not depend on
             # the inputs (and consequently confuses jit)

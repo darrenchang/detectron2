@@ -193,7 +193,7 @@ def paste_mask_in_image_old(mask, box, img_h, img_w, threshold):
     else:
         # for visualization and debugging, we also
         # allow it to return an unmodified mask
-        mask = torch.from_numpy(mask * 255).to(torch.uint8)
+        mask = torch.from_numpy(mask * 255).uint8()
 
     im_mask = torch.zeros((img_h, img_w), dtype=torch.uint8)
     x_0 = max(box[0], 0)

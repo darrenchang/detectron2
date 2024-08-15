@@ -483,7 +483,7 @@ def caffe2_fast_rcnn_outputs_inference(tensor_mode, box_predictor, predictions, 
     roi_keeps_nms = to_device(nms_outputs[4], device)
     roi_keeps_size_nms = to_device(nms_outputs[5], device)
     if not tensor_mode:
-        roi_class_nms = roi_class_nms.to(torch.int64)
+        roi_class_nms = roi_class_nms.int64()
 
     roi_batch_ids = cat(
         [
@@ -513,7 +513,7 @@ def caffe2_fast_rcnn_outputs_inference(tensor_mode, box_predictor, predictions, 
     if not tensor_mode:
         results = InstancesList.to_d2_instances_list(results)
         batch_splits = roi_batch_splits_nms.int().tolist()
-        kept_indices = list(roi_keeps_nms.to(torch.int64).split(batch_splits))
+        kept_indices = list(roi_keeps_nms.int64().split(batch_splits))
     else:
         results = [results]
         kept_indices = [roi_keeps_nms]

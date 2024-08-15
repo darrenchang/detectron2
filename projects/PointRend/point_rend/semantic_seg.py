@@ -91,13 +91,13 @@ class PointRendSemSegHead(nn.Module):
             point_logits = self.point_head(fine_grained_features, coarse_features)
             point_targets = (
                 point_sample(
-                    targets.unsqueeze(1).to(torch.float),
+                    targets.unsqueeze(1).float(),
                     point_coords,
                     mode="nearest",
                     align_corners=False,
                 )
                 .squeeze(1)
-                .to(torch.long)
+                .long()
             )
             losses["loss_sem_seg_point"] = F.cross_entropy(
                 point_logits, point_targets, reduction="mean", ignore_index=self.ignore_value

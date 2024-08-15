@@ -146,7 +146,7 @@ class FCOS(DenseDetector):
         # Match the GT box with minimum area, if there are multiple GT matches.
         gt_areas = gt_boxes.area()  # (M, )
 
-        match_quality_matrix = match_quality_matrix.to(torch.float32)
+        match_quality_matrix = match_quality_matrix.float()
         match_quality_matrix *= 1e8 - gt_areas[:, None]
         return match_quality_matrix  # (M, R)
 
