@@ -60,7 +60,7 @@ def retry_if_cuda_oom(func):
         except AttributeError:
             like_gpu_tensor = False
         if like_gpu_tensor:
-            return x.to(device="cpu")
+            return x.cpu()
         else:
             return x
 

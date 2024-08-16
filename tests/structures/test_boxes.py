@@ -193,7 +193,7 @@ class TestBoxes(unittest.TestCase):
 
     def test_to(self):
         x = Boxes(torch.rand(3, 4))
-        self.assertEqual(x.to(device="cpu").tensor.device.type, "cpu")
+        self.assertEqual(x.cpu().tensor.device.type, "cpu")
 
     def test_scriptability(self):
         def func(x):

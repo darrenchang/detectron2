@@ -1183,7 +1183,7 @@ class DensePoseCocoEval:
 
     def findClosestVertsCse(self, embedding, py, px, mask, mesh_name):
         mesh_vertex_embeddings = self.embedder(mesh_name)
-        pixel_embeddings = embedding[:, py, px].t().to(device="cuda")
+        pixel_embeddings = embedding[:, py, px].t().cuda()
         mask_vals = mask[py, px]
         edm = squared_euclidean_distance_matrix(pixel_embeddings, mesh_vertex_embeddings)
         vertex_indices = edm.argmin(dim=1).cpu()

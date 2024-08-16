@@ -85,7 +85,7 @@ class DetectionCheckpointer(Checkpointer):
         elif filename.endswith(".pyth"):
             # assume file is from pycls; no one else seems to use the ".pyth" extension
             with PathManager.open(filename, "rb") as f:
-                data = torch.load(f)
+                data = torch.load(f, weights_only=False)
             assert (
                 "model_state" in data
             ), f"Cannot load .pyth file {filename}; pycls checkpoints must contain 'model_state'."
