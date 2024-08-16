@@ -491,7 +491,7 @@ class TensorMask(nn.Module):
 
                         loss_mask += F.binary_cross_entropy_with_logits(
                             cur_pred_masks.view(-1, cur_mask_size, cur_mask_size),  # V, U
-                            gt_masks[lvl][anc].to(dtype=torch.float32),
+                            gt_masks[lvl][anc].float(),
                             reduction="sum",
                             weight=cur_size_divider,
                             pos_weight=self.mask_pos_weight,

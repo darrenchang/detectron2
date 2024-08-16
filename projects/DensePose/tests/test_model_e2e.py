@@ -19,7 +19,7 @@ def make_model_inputs(image, instances=None):
 def make_empty_instances(h, w):
     instances = Instances((h, w))
     instances.gt_boxes = Boxes(torch.rand(0, 4))
-    instances.gt_classes = torch.tensor([]).to(dtype=torch.int64)
+    instances.gt_classes = torch.tensor([]).long()
     instances.gt_masks = BitMasks(torch.rand(0, h, w))
     return instances
 

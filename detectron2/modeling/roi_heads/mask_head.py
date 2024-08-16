@@ -59,7 +59,7 @@ def mask_rcnn_loss(pred_mask_logits: torch.Tensor, instances: List[Instances], v
         if len(instances_per_image) == 0:
             continue
         if not cls_agnostic_mask:
-            gt_classes_per_image = instances_per_image.gt_classes.to(dtype=torch.int64)
+            gt_classes_per_image = instances_per_image.gt_classes.long()
             gt_classes.append(gt_classes_per_image)
 
         gt_masks_per_image = instances_per_image.gt_masks.crop_and_resize(
@@ -85,7 +85,7 @@ def mask_rcnn_loss(pred_mask_logits: torch.Tensor, instances: List[Instances], v
     else:
         # Here we allow gt_masks to be float as well (depend on the implementation of rasterize())
         gt_masks_bool = gt_masks > 0.5
-    gt_masks = gt_masks.to(dtype=torch.float32)
+    gt_masks = gt_masks.float()
 
     # Log the training accuracy (using gt classes and sigmoid(0.0) == 0.5 threshold)
     mask_incorrect = (pred_mask_logits > 0.0) != gt_masks_bool

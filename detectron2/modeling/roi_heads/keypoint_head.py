@@ -69,7 +69,7 @@ def keypoint_rcnn_loss(pred_keypoint_logits, instances, normalizer):
 
     if len(heatmaps):
         keypoint_targets = cat(heatmaps, dim=0)
-        valid = cat(valid, dim=0).to(dtype=torch.uint8)
+        valid = cat(valid, dim=0).byte()
         valid = torch.nonzero(valid).squeeze(1)
 
     # torch.mean (in binary_cross_entropy_with_logits) doesn't

@@ -67,7 +67,7 @@ class DensePoseTransformData:
             map_src = uv_symmetry_map[key]
             map_dst = uv_symmetry_map_torch[key]
             for i in range(map_src.shape[1]):
-                map_dst.append(torch.from_numpy(map_src[0, i]).to(dtype=torch.float))
+                map_dst.append(torch.from_numpy(map_src[0, i]).float())
             uv_symmetry_map_torch[key] = torch.stack(map_dst, dim=0)
         transform_data = DensePoseTransformData(uv_symmetry_map_torch, device=torch.device("cpu"))
         return transform_data

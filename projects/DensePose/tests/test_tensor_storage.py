@@ -30,7 +30,7 @@ class TestSingleProcessRamTensorStorage(unittest.TestCase):
         for _i in range(3):
             data_elt = {
                 "tf": torch.rand((112, 112), dtype=torch.float32),
-                "ti": (torch.rand(4, 64, 64) * 1000).to(dtype=torch.int32),
+                "ti": (torch.rand(4, 64, 64) * 1000).int(),
             }
             data_elts.append(data_elt)
         storage = SingleProcessRamTensorStorage(schema, io.BytesIO())
@@ -61,7 +61,7 @@ class TestSingleProcessFileTensorStorage(unittest.TestCase):
         for _i in range(3):
             data_elt = {
                 "tf": torch.rand((112, 112), dtype=torch.float32),
-                "ti": (torch.rand(4, 64, 64) * 1000).to(dtype=torch.int32),
+                "ti": (torch.rand(4, 64, 64) * 1000).int(),
             }
             data_elts.append(data_elt)
         # WARNING: opens the file several times! may not work on all platforms

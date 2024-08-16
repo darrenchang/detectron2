@@ -102,7 +102,7 @@ class ImageList:
 
         # handle weirdness of scripting and tracing ...
         if torch.jit.is_scripting():
-            max_size: List[int] = max_size.to(dtype=torch.long).tolist()
+            max_size: List[int] = max_size.long().tolist()
         else:
             if torch.jit.is_tracing():
                 image_sizes = image_sizes_tensor

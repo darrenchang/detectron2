@@ -47,7 +47,7 @@ def roi_mask_point_loss(mask_logits, instances, point_labels):
                 continue
 
             if not cls_agnostic_mask:
-                gt_classes_per_image = instances_per_image.gt_classes.to(dtype=torch.int64)
+                gt_classes_per_image = instances_per_image.gt_classes.long()
                 gt_classes.append(gt_classes_per_image)
 
     gt_mask_logits = point_labels
@@ -65,7 +65,7 @@ def roi_mask_point_loss(mask_logits, instances, point_labels):
         mask_logits = mask_logits[indices, gt_classes]
 
     # Log the training accuracy (using gt classes and 0.0 threshold for the logits)
-    mask_accurate = (mask_logits > 0.0) == gt_mask_logits.to(dtype=torch.uint8)
+    mask_accurate = (mask_logits > 0.0) == gt_mask_logits.byte()
     mask_accurate = mask_accurate[~point_ignores]
     mask_accuracy = mask_accurate.nonzero().size(0) / max(mask_accurate.numel(), 1.0)
     get_event_storage().put_scalar("point/accuracy", mask_accuracy)

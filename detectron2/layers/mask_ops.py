@@ -39,8 +39,8 @@ def _do_paste_mask(masks, boxes, img_h: int, img_w: int, skip_empty: bool = True
         x0_int, y0_int = torch.clamp(boxes.min(dim=0).values.floor()[:2] - 1, min=0).to(
             dtype=torch.int32
         )
-        x1_int = torch.clamp(boxes[:, 2].max().ceil() + 1, max=img_w).to(dtype=torch.int32)
-        y1_int = torch.clamp(boxes[:, 3].max().ceil() + 1, max=img_h).to(dtype=torch.int32)
+        x1_int = torch.clamp(boxes[:, 2].max().ceil() + 1, max=img_w).int()
+        y1_int = torch.clamp(boxes[:, 3].max().ceil() + 1, max=img_h).int()
     else:
         x0_int, y0_int = 0, 0
         x1_int, y1_int = img_w, img_h
@@ -135,7 +135,7 @@ def paste_masks_in_image(
         )
 
         if threshold >= 0:
-            masks_chunk = (masks_chunk >= threshold).to(dtype=torch.bool)
+            masks_chunk = (masks_chunk >= threshold).bool()
         else:
             # for visualization and debugging
             masks_chunk = (masks_chunk * 255).byte()
@@ -175,7 +175,7 @@ def paste_mask_in_image_old(mask, box, img_h, img_w, threshold):
     # Conversion from continuous box coordinates to discrete pixel coordinates
     # via truncation (cast to int32). This determines which pixels to paste the
     # mask onto.
-    box = box.to(dtype=torch.int32)  # Continuous to discrete coordinate conversion
+    box = box.int()  # Continuous to discrete coordinate conversion
     # An example (1D) box with continuous coordinates (x0=0.7, x1=4.3) will map to
     # a discrete coordinates (x0=0, x1=4). Note that box is mapped to 5 = x1 - x0 + 1
     # pixels (not x1 - x0 pixels).

@@ -211,7 +211,8 @@ def combine_semantic_and_instance_outputs(
     current_segment_id = 0
     segments_info = []
 
-    instance_masks = instance_results.pred_masks.to(dtype=torch.bool, device=panoptic_seg.device)
+    # instance_masks = instance_results.pred_masks.to(dtype=torch.bool, device=panoptic_seg.device)
+    instance_masks = instance_results.pred_masks.bool().cuda()
 
     # Add instances one-by-one, check for overlaps with existing ones
     for inst_id in sorted_inds:

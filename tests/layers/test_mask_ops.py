@@ -45,11 +45,11 @@ def rasterize_polygons_with_grid_sample(full_image_bit_mask, box, mask_size, thr
     mask_x = (mask_x - 0.5) / (img_w - 1) * 2 + -1
     mask_y = (mask_y - 0.5) / (img_h - 1) * 2 + -1
     gy, gx = torch.meshgrid(torch.from_numpy(mask_y), torch.from_numpy(mask_x))
-    ind = torch.stack([gx, gy], dim=-1).to(dtype=torch.float32)
+    ind = torch.stack([gx, gy], dim=-1).float()
 
     full_image_bit_mask = torch.from_numpy(full_image_bit_mask)
     mask = F.grid_sample(
-        full_image_bit_mask[None, None, :, :].to(dtype=torch.float32),
+        full_image_bit_mask[None, None, :, :].float(),
         ind[None, :, :, :],
         align_corners=True,
     )
@@ -107,7 +107,7 @@ class TestMaskCropPaste(unittest.TestCase):
         gt_bit_mask = polygons_to_bitmask(gt_polygons, height, width)
 
         # Run rasterize ..
-        torch_gt_bbox = torch.tensor(gt_bbox).to(dtype=torch.float32).reshape(-1, 4)
+        torch_gt_bbox = torch.tensor(gt_bbox).float().reshape(-1, 4)
         box_bitmasks = {
             "polygon": PolygonMasks([gt_polygons]).crop_and_resize(torch_gt_bbox, mask_side_len)[0],
             "gridsample": rasterize_polygons_with_grid_sample(gt_bit_mask, gt_bbox, mask_side_len),
