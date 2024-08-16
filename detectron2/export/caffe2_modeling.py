@@ -362,7 +362,7 @@ class Caffe2RetinaNet(Caffe2MetaArch):
         serialized_anchor_generator = io.BytesIO(
             get_pb_arg_vals(predict_net, "serialized_anchor_generator", None)
         )
-        self.anchor_generator = torch.load(serialized_anchor_generator)
+        self.anchor_generator = torch.load(serialized_anchor_generator, weights_only=False)
         bbox_reg_weights = get_pb_arg_floats(predict_net, "bbox_reg_weights", None)
         self.box2box_transform = Box2BoxTransform(weights=tuple(bbox_reg_weights))
         self.test_score_thresh = get_pb_arg_valf(predict_net, "score_threshold", None)

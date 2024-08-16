@@ -32,7 +32,7 @@ INPUT:
 if __name__ == "__main__":
     input = sys.argv[1]
 
-    obj = torch.load(input, map_location="cpu")
+    obj = torch.load(input, map_location="cpu", weights_only=False)
 
     newmodel = {}
     for k in list(obj.keys()):
